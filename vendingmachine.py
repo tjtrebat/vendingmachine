@@ -6,6 +6,7 @@ import tkMessageBox
 
 class VendingMachine:
     def __init__(self, root):
+        root.title("Vending Machine")
         self.frame = Frame(root, padx=15, pady=15)
         self.frame.grid()
         self.add_snacks()
@@ -29,15 +30,26 @@ class VendingMachine:
                 Label(frame, text=id_snack).grid(row=2 * i + 1, column=j)
 
     def add_panel(self):
+        # add Frame on right side
         top_frame = Frame(self.frame)
         top_frame.pack(side=RIGHT, padx=15, anchor="n")
-        
         # add selection screen
         self.tv_selection = StringVar()
         Label(top_frame, textvariable=self.tv_selection, bd=1, relief=SOLID, width=20, height=4).grid(sticky="w")
+        # add selection buttons
+        self.add_button_panel(top_frame) 
+        # add payment panel and widgets
+        frame = self.add_money_panel(top_frame, "Payment", 'payment_amt')
+        self.payment = [Spinbox(frame, width=2, from_=0, to=99, command=self.change_amount) for i in range(4)]
+        self.add_coins(frame, self.payment)
+        # add change panel and widgets
+        frame = self.add_money_panel(top_frame, "Change", 'change_amt')
+        self.tv_change = [StringVar() for i in range(4)]
+        self.change = [Entry(frame, width=2, textvariable=self.tv_change[i], state=DISABLED) for i in range(4)]
+        self.add_coins(frame, self.change)
 
-        # add buttons
-        lbl_frame = LabelFrame(top_frame, text="Please make selection", padx=35, pady=5)
+    def add_button_panel(self, frame):
+        lbl_frame = LabelFrame(frame, text="Please make selection", padx=35, pady=5)
         lbl_frame.grid(sticky="w")
         frame = Frame(lbl_frame)
         frame.grid(column=1)
@@ -47,24 +59,6 @@ class VendingMachine:
         frame.grid(column=1)
         for i in range(4):  # add number buttons
             Button(frame, text=1 + i, command=lambda x= str(1 + i):self.num_click_handler(x)).grid(row=1 + (i // 2), column=(i % 2))
-
-        # add payment
-        lbl_frame = LabelFrame(top_frame, text="Payment")
-        lbl_frame.grid()
-        self.tv_payment_amt = StringVar()
-        self.payment_amt = self.get_payment(lbl_frame, self.tv_payment_amt)
-        self.payment = [Spinbox(lbl_frame, width=2, from_=0, to=99,
-                                command=self.change_amount) for i in range(4)]
-        self.add_coins(lbl_frame, self.payment)
-
-        # add change
-        lbl_frame = LabelFrame(top_frame, text="Change")
-        lbl_frame.grid()
-        self.tv_change_amt = StringVar()
-        self.change_amt = self.get_payment(lbl_frame, self.tv_change_amt)
-        self.tv_change = [StringVar() for i in range(4)]
-        self.change = [Entry(lbl_frame, width=2, textvariable=self.tv_change[i], state=DISABLED) for i in range(4)]
-        self.add_coins(lbl_frame, self.change)
 
     def num_click_handler(self, num):
         selection = self.tv_selection.get()
@@ -88,17 +82,25 @@ class VendingMachine:
                     change = round(change - (num_coins * self.coins[i]), 2)
         self.tv_selection.set(selection)
 
-    def add_coins(self, frame, widgets):
-        coins = ('penny.jpg', 'nickel.jpg', 'dime.jpg', 'quarter.jpg')
-        for i in range(4):
-            self.get_image_label(coins[i], frame).grid(row=0, column=2 + i, padx=3)
-            widgets[i].grid(row=1, column=(2 + i))
+    def add_money_panel(self, frame, label, entry):
+        lbl_frame = LabelFrame(frame, text=label)
+        lbl_frame.grid()
+        tv = "tv_%s" % entry
+        setattr(self, tv, StringVar())
+        setattr(self, entry, self.get_payment(lbl_frame, getattr(self, tv)))
+        return lbl_frame
 
     def get_payment(self, frame, tv):
         Label(frame, text="Amount:").grid(row=0, column=0)
         entry = Entry(frame, width=10, textvariable=tv, state=DISABLED)
         entry.grid(row=0, column=1)
         return entry
+
+    def add_coins(self, frame, widgets):
+        coins = ('penny.jpg', 'nickel.jpg', 'dime.jpg', 'quarter.jpg')
+        for i in range(4):
+            self.get_image_label(coins[i], frame).grid(row=0, column=2 + i, padx=3)
+            widgets[i].grid(row=1, column=(2 + i))
 
     def change_amount(self):
         amount = 0
