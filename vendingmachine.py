@@ -25,7 +25,7 @@ class VendingMachine:
             random.shuffle(keys)
             for j, snack in enumerate(keys):
                 # add snack image
-                lbl_snack = self.get_image_label("%s.jpg" % snack, frame)
+                lbl_snack = self.get_image_label(snack, frame)
                 lbl_snack.grid(row=2 * i, column=j, padx=5, pady=10)
                 # add snack number and price
                 id_snack = "%s%s" % (self.letters[i], j + 1)
@@ -113,7 +113,7 @@ class VendingMachine:
         return entry
 
     def add_coins(self, frame, widgets):
-        coins = ('penny.jpg', 'nickel.jpg', 'dime.jpg', 'quarter.jpg')
+        coins = ('penny', 'nickel', 'dime', 'quarter')
         for i in range(4):
             self.get_image_label(coins[i], frame).grid(row=0, column=2 + i, padx=3)
             widgets[i].grid(row=1, column=(2 + i))
@@ -128,7 +128,7 @@ class VendingMachine:
         self.reset_entries(self.tv_change, self.tv_change_amt) 
 
     def get_image_label(self, img, frame):
-        image = Image.open(img)
+        image = Image.open("images/%s.jpg" % img)
         photo = ImageTk.PhotoImage(image)
         label = Label(frame, image=photo)
         label.image = photo
