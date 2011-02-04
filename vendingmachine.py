@@ -1,5 +1,7 @@
 __author__ = 'Tom'
 
+import random
+from decimal import *
 from Tkinter import *
 from PIL import Image, ImageTk
 import tkMessageBox
@@ -15,19 +17,20 @@ class VendingMachine:
     def add_snacks(self):
         frame = Frame(self.frame, bd=1, relief=SUNKEN)
         frame.pack(side=LEFT)
-        snacks = ('cookie', 'gum', 'pretzel', 'soda')
-        prices = {'cookie': .70, 'gum': .90, 'pretzel': .60, 'soda': .80}
+        snacks = {'cookie': .70, 'gum': .90, 'pretzel': .60, 'soda': .80}
         self.values = {}
         self.letters = map(chr, range(65, 68))  # list of caps (A to C)
         for i in range(3):
-            for j, snack in enumerate(snacks):
+            keys = snacks.keys()
+            random.shuffle(keys)
+            for j, snack in enumerate(keys):
                 # add snack image
                 lbl_snack = self.get_image_label("%s.jpg" % snack, frame)
                 lbl_snack.grid(row=2 * i, column=j, padx=5, pady=10)
-                # add snack number
+                # add snack number and price
                 id_snack = "%s%s" % (self.letters[i], j + 1)
-                self.values[id_snack] = prices[snack]
-                Label(frame, text=id_snack).grid(row=2 * i + 1, column=j)
+                self.values[id_snack] = snacks[snack]
+                Label(frame, text="%s  %.2f" % (id_snack, snacks[snack])).grid(row=2 * i + 1, column=j)
 
     def add_panel(self):
         # add Frame on right side
@@ -67,20 +70,33 @@ class VendingMachine:
         selection += num
         if self.tv_payment_amt.get().strip():
             amount = round(float(self.tv_payment_amt.get()), 2)
-            if ((len(selection) == 2 and amount > 0) and
-                ((selection[0] in self.letters) and (int(selection[1]) in range(1, 5))) and
-                (amount >= self.values[selection])):
-                for spin_box in self.payment:
-                    for i in range(int(spin_box.get())):
-                        spin_box.invoke('buttondown')
-                self.tv_payment_amt.set("")
-                change = round(amount - self.values[selection], 2)
-                self.tv_change_amt.set("%0.2f" % change)
-                for i in reversed(range(4)):
-                    num_coins = int(change // self.coins[i])
-                    self.tv_change[i].set(str(num_coins))
-                    change = round(change - (num_coins * self.coins[i]), 2)
+            if (len(selection) == 2) and (amount > 0):
+                if (selection[0] in self.letters) and (int(selection[1]) in range(1, 5)):
+                    if amount >= self.values[selection]: # Dispense snack item
+                        self.reset_entries(self.payment, self.tv_payment_amt) # reset payment entries
+                        # set change entries
+                        change = Decimal(str(amount - self.values[selection]))
+                        self.tv_change_amt.set("%0.2f" % change)
+                        for i in reversed(range(4)):
+                            num_coins = int(change // Decimal(str(self.coins[i])))
+                            self.tv_change[i].set(str(num_coins))
+                            change = Decimal(str(change - Decimal(str(num_coins * self.coins[i]))))
+                    else:
+                        tkMessageBox.showwarning("Warning", "Insufficient funds")
+                else:
+                    tkMessageBox.showwarning("Warning", "Invalid choice")
+            elif len(selection) == 1: # reset change entries in case of repeat purchase
+                self.reset_entries(self.tv_change, self.tv_change_amt)
         self.tv_selection.set(selection)
+
+    def reset_entries(self, entries, entry):
+        entry.set("")
+        for entry in entries:
+            if isinstance(entry, Spinbox):
+                for i in range(int(entry.get())):
+                    entry.invoke('buttondown')
+            else:
+                entry.set("")
 
     def add_money_panel(self, frame, label, entry):
         lbl_frame = LabelFrame(frame, text=label)
@@ -109,6 +125,7 @@ class VendingMachine:
             amount += int(spin_box.get()) * self.coins[i]
         self.tv_payment_amt.set("%0.2f" % round(amount, 2))
         self.tv_selection.set("")
+        self.reset_entries(self.tv_change, self.tv_change_amt) 
 
     def get_image_label(self, img, frame):
         image = Image.open(img)
