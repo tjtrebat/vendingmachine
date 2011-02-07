@@ -7,7 +7,9 @@ from PIL import Image, ImageTk
 import tkMessageBox
 
 class VendingMachine:
+    """ A simple Tk vending machine example """
     def __init__(self, root):
+        """ Init new VendingMachine """
         root.title("Vending Machine")
         self.frame = Frame(root, padx=15, pady=15)
         self.frame.grid()
@@ -15,6 +17,7 @@ class VendingMachine:
         self.add_panel()
 
     def add_snacks(self):
+        """ Add frame for snacks """
         frame = Frame(self.frame, bd=1, relief=SUNKEN)
         frame.pack(side=LEFT)
         snacks = {'cookie': .70, 'gum': .90, 'pretzel': .60, 'soda': .80}
@@ -33,8 +36,8 @@ class VendingMachine:
                 Label(frame, text="%s  %.2f" % (id_snack, snacks[snack])).grid(row=2 * i + 1, column=j)
 
     def add_panel(self):
-        # add Frame on right side
-        top_frame = Frame(self.frame)
+        """ Add frame for right side """
+        top_frame = Frame(self.frame) # add Frame on right side
         top_frame.pack(side=RIGHT, padx=15, anchor="n")
         # add selection screen
         self.tv_selection = StringVar()
@@ -52,6 +55,7 @@ class VendingMachine:
         self.add_coins(frame, self.change)
 
     def add_button_panel(self, frame):
+        """ Add frame for button selection widgets """
         lbl_frame = LabelFrame(frame, text="Please make selection", padx=35, pady=5)
         lbl_frame.grid(sticky="w")
         frame = Frame(lbl_frame)
@@ -64,11 +68,14 @@ class VendingMachine:
             Button(frame, text=1 + i, command=lambda x= str(1 + i):self.num_click_handler(x)).grid(row=1 + (i // 2), column=(i % 2))
 
     def num_click_handler(self, num):
+        """ Event handler for button pad """
         selection = self.tv_selection.get()
         if len(selection) > 1:
-            selection = ""
-        selection += num
-        if self.tv_payment_amt.get().strip():
+            selection = "" # reset selection if > 1 letter already
+        selection += num # add to user selection the button pressed
+        if self.tv_payment_amt.get().strip(): # if money has been inserted ...
+            # get the amount, and determine if user has enough and
+            # has made a valid selection
             amount = round(float(self.tv_payment_amt.get()), 2)
             if (len(selection) == 2) and (amount > 0):
                 if (selection[0] in self.letters) and (int(selection[1]) in range(1, 5)):
@@ -90,6 +97,7 @@ class VendingMachine:
         self.tv_selection.set(selection)
 
     def reset_entries(self, entries, entry):
+        """ Clears a list of spin boxes or text variables """
         entry.set("")
         for entry in entries:
             if isinstance(entry, Spinbox):
@@ -99,6 +107,7 @@ class VendingMachine:
                 entry.set("")
 
     def add_money_panel(self, frame, label, entry):
+        """ Add frame for payment or change """
         lbl_frame = LabelFrame(frame, text=label)
         lbl_frame.grid()
         tv = "tv_%s" % entry
@@ -107,18 +116,22 @@ class VendingMachine:
         return lbl_frame
 
     def get_payment(self, frame, tv):
+        """ Get the amount Entry for payment or change frame """
         Label(frame, text="Amount:").grid(row=0, column=0)
         entry = Entry(frame, width=10, textvariable=tv, state=DISABLED)
         entry.grid(row=0, column=1)
         return entry
 
     def add_coins(self, frame, widgets):
+        """ Adds the coin images and spin boxes or entry widgets """
         coins = ('penny', 'nickel', 'dime', 'quarter')
         for i in range(4):
             self.get_image_label(coins[i], frame).grid(row=0, column=2 + i, padx=3)
             widgets[i].grid(row=1, column=(2 + i))
 
     def change_amount(self):
+        """ Change amount in the payment entry widget when
+        the user presses spin box button """
         amount = 0
         self.coins = (.01, .05, .10, .25)
         for i, spin_box in enumerate(self.payment):
@@ -128,12 +141,14 @@ class VendingMachine:
         self.reset_entries(self.tv_change, self.tv_change_amt) 
 
     def get_image_label(self, img, frame):
+        """ Returns a label configured with an image """
         image = Image.open("images/%s.jpg" % img)
         photo = ImageTk.PhotoImage(image)
         label = Label(frame, image=photo)
         label.image = photo
         return label
 
-root = Tk()
-atm = VendingMachine(root)
-root.mainloop()
+if __name__ == "__main__":
+    root = Tk()
+    atm = VendingMachine(root)
+    root.mainloop()
